@@ -16,19 +16,18 @@ final class AppState {
 
     // MARK: - Vocabulary
     var recentVocab: [VocabEntry] = []
+    var allVocab: [VocabEntry] = []
 
     // MARK: - Permissions
-    var hasScreenCapturePermission = false
     var hasMicrophonePermission = false
     var hasAccessibilityPermission = false
 
     var allPermissionsGranted: Bool {
-        hasScreenCapturePermission && hasMicrophonePermission && hasAccessibilityPermission
+        hasMicrophonePermission && hasAccessibilityPermission
     }
 
     var missingPermissions: [String] {
         var missing: [String] = []
-        if !hasScreenCapturePermission { missing.append("Screen Recording") }
         if !hasMicrophonePermission { missing.append("Microphone") }
         if !hasAccessibilityPermission { missing.append("Accessibility") }
         return missing
@@ -64,9 +63,9 @@ final class AppState {
         set { UserDefaults.standard.set(newValue, forKey: "overlayDuration") }
     }
 
-    var imageDetail: String {
-        get { UserDefaults.standard.string(forKey: "imageDetail") ?? "low" }
-        set { UserDefaults.standard.set(newValue, forKey: "imageDetail") }
+    var hideFromScreenShare: Bool {
+        get { UserDefaults.standard.object(forKey: "hideFromScreenShare") as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: "hideFromScreenShare") }
     }
 
     var menuBarIcon: String {

@@ -122,11 +122,6 @@ struct MenuBarView: View {
                 .foregroundStyle(.secondary)
 
             permissionRow(
-                "Screen Recording",
-                granted: appState.hasScreenCapturePermission,
-                action: { delegate.openSystemPreferences(for: "screen") }
-            )
-            permissionRow(
                 "Microphone",
                 granted: appState.hasMicrophonePermission,
                 action: { delegate.openSystemPreferences(for: "mic") }
@@ -173,7 +168,7 @@ struct MenuBarView: View {
                     .lineLimit(1)
             }
 
-            Text(response.translation)
+            Text(response.mainText)
                 .font(.callout)
                 .fontWeight(.medium)
                 .lineLimit(3)
@@ -191,6 +186,11 @@ struct MenuBarView: View {
 
     private var footerSection: some View {
         HStack {
+            Button {
+                HistoryWindowController.shared.show(appState: appState, delegate: delegate)
+            } label: {
+                Label("History", systemImage: "clock.arrow.circlepath")
+            }
             Button("Settings...") {
                 SettingsWindowController.shared.show()
             }

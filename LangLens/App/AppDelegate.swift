@@ -1,12 +1,10 @@
 import AppKit
-import ScreenCaptureKit
 
 @MainActor
 final class AppDelegate: NSObject {
     var appState: AppState!
 
     private let hotkeyService = HotkeyService()
-    private let screenCaptureService = ScreenCaptureService()
     private let audioCaptureService = AudioCaptureService()
     private let whisperService = WhisperService()
     private let openAIService = OpenAIService()
@@ -19,22 +17,35 @@ final class AppDelegate: NSObject {
         setupHotkey()
         loadWhisperModel()
         Task { await loadRecentVocab() }
+        observeWindowVisibility()
+    }
+
+    // MARK: - Screen Share Visibility
+
+    private nonisolated func observeWindowVisibility() {
+        NotificationCenter.default.addObserver(
+            forName: NSWindow.didChangeOcclusionStateNotification,
+            object: nil,
+            queue: .main
+        ) { notification in
+            guard let window = notification.object as? NSWindow else { return }
+            MainActor.assumeIsolated {
+                let hide = UserDefaults.standard.object(forKey: "hideFromScreenShare") as? Bool ?? true
+                guard hide else { return }
+                if window.title == "LangLens Settings" { return }
+                if window.sharingType != .none {
+                    window.sharingType = .none
+                }
+            }
+        }
     }
 
     // MARK: - Permissions
 
     func checkPermissions() {
         appState.hasAccessibilityPermission = AccessibilityPermission.hasPermission()
-        appState.hasScreenCapturePermission = CGPreflightScreenCaptureAccess()
         Task {
             appState.hasMicrophonePermission = await AudioPermission.requestPermission()
-        }
-    }
-
-    func requestScreenPermission() {
-        CGRequestScreenCaptureAccess()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
-            self?.appState.hasScreenCapturePermission = CGPreflightScreenCaptureAccess()
         }
     }
 
@@ -51,8 +62,6 @@ final class AppDelegate: NSObject {
     func openSystemPreferences(for pane: String) {
         let url: URL?
         switch pane {
-        case "screen":
-            url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")
         case "mic":
             url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone")
         case "accessibility":
@@ -91,6 +100,27 @@ final class AppDelegate: NSObject {
     private func loadRecentVocab() async {
         let recent = await vocabularyStore.loadRecent(10)
         appState.recentVocab = recent
+    }
+
+    func loadAllVocab() async {
+        let all = await vocabularyStore.loadAll()
+        appState.allVocab = all
+    }
+
+    func deleteVocabEntry(_ id: UUID) {
+        Task {
+            try? await vocabularyStore.delete(id)
+            await loadAllVocab()
+            await loadRecentVocab()
+        }
+    }
+
+    func clearAllVocab() {
+        Task {
+            try? await vocabularyStore.clearAll()
+            await loadAllVocab()
+            await loadRecentVocab()
+        }
     }
 
     // MARK: - Recording Flow
@@ -140,16 +170,11 @@ final class AppDelegate: NSObject {
 
         Task {
             do {
-                async let frameResult = screenCaptureService.captureFrame()
-                async let transcriptionResult = whisperService.transcribe(audioData: audioData)
-
-                let frame = try await frameResult
-                let transcription = try await transcriptionResult
+                let transcription = try await whisperService.transcribe(audioData: audioData)
 
                 appState.lastTranscription = transcription
                 Log.info("[AppDelegate] Transcription: \(transcription)")
 
-                let base64 = ImageUtils.cgImageToBase64JPEG(frame, quality: 0.6)
                 let context = languageContext.generateContext(
                     nativeLang: appState.nativeLang,
                     targetLang: appState.targetLang,
@@ -165,9 +190,7 @@ final class AppDelegate: NSObject {
                 )
 
                 let response = try await openAIService.analyze(
-                    base64Image: base64,
-                    prompt: prompt,
-                    detail: appState.imageDetail
+                    prompt: prompt
                 )
 
                 appState.lastResponse = response
@@ -175,10 +198,9 @@ final class AppDelegate: NSObject {
 
                 overlayController.show(response: response, duration: appState.overlayDuration)
 
-                // Save to vocabulary if there's a translation
                 let entry = VocabEntry(
                     word: transcription,
-                    translation: response.translation,
+                    translation: response.mainText,
                     pronunciation: response.pronunciation,
                     context: response.contextNote,
                     sourceLang: appState.nativeLang,
@@ -187,7 +209,7 @@ final class AppDelegate: NSObject {
                 try? await vocabularyStore.save(entry)
                 await loadRecentVocab()
 
-                Log.info("[AppDelegate] Response: \(response.translation)")
+                Log.info("[AppDelegate] Response (\(response.mode)): \(response.mainText)")
             } catch {
                 appState.isProcessing = false
                 appState.errorMessage = error.localizedDescription

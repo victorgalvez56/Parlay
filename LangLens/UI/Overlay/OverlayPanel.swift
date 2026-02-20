@@ -15,5 +15,8 @@ final class OverlayPanel: NSPanel {
         ignoresMouseEvents = true
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         isMovableByWindowBackground = false
+
+        let hideFromScreenShare = UserDefaults.standard.object(forKey: "hideFromScreenShare") as? Bool ?? true
+        sharingType = hideFromScreenShare ? .none : .readOnly
     }
 }

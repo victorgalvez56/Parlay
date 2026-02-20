@@ -4,7 +4,7 @@ actor OpenAIService {
     private let session = URLSession.shared
     private let endpoint = URL(string: "https://api.openai.com/v1/chat/completions")!
 
-    func analyze(base64Image: String, prompt: String, detail: String = "low") async throws -> LangResponse {
+    func analyze(prompt: String) async throws -> LangResponse {
         guard let apiKey = KeychainHelper.loadAPIKey(), !apiKey.isEmpty else {
             throw OpenAIError.missingAPIKey
         }
@@ -14,7 +14,6 @@ actor OpenAIService {
             messages: [
                 OpenAIMessage(role: "user", content: [
                     .text(prompt),
-                    .imageURL(url: "data:image/jpeg;base64,\(base64Image)", detail: detail),
                 ]),
             ],
             maxTokens: 800,

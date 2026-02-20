@@ -33,42 +33,28 @@ struct OverlayContentView: View {
 
     private func responseView(_ r: LangResponse) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            // Translation (main answer)
-            Text(r.translation)
-                .font(.title3)
-                .fontWeight(.semibold)
-                .fixedSize(horizontal: false, vertical: true)
-
-            // Pronunciation
-            if let pronunciation = r.pronunciation, !pronunciation.isEmpty {
-                HStack(spacing: 4) {
-                    Image(systemName: "speaker.wave.2")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Text(pronunciation)
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                }
+            // Mode badge
+            HStack(spacing: 4) {
+                Image(systemName: modeBadgeIcon(r))
+                    .font(.caption2)
+                Text(modeBadgeLabel(r))
+                    .font(.caption2)
+                    .fontWeight(.semibold)
             }
+            .foregroundStyle(modeBadgeColor(r))
 
-            // Grammar
-            if let grammar = r.grammar, !grammar.isEmpty {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Grammar")
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.blue)
-                    Text(grammar)
-                        .font(.caption)
-                        .foregroundStyle(.primary.opacity(0.85))
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+            if r.isPronunciation {
+                pronunciationView(r)
+            } else if r.isCorrection {
+                correctionView(r)
+            } else {
+                translationView(r)
             }
 
             // Examples
             if !r.examples.isEmpty {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Examples")
+                    Text(r.isPronunciation ? "In Context" : r.isCorrection ? "Alternatives" : "Examples")
                         .font(.caption)
                         .fontWeight(.semibold)
                         .foregroundStyle(.green)
@@ -102,6 +88,175 @@ struct OverlayContentView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Translation Mode
+
+    private func translationView(_ r: LangResponse) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if let translation = r.translation, !translation.isEmpty {
+                Text(translation)
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if let pronunciation = r.pronunciation, !pronunciation.isEmpty {
+                HStack(spacing: 4) {
+                    Image(systemName: "speaker.wave.2")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text(pronunciation)
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            if let grammar = r.grammar, !grammar.isEmpty {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Grammar")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.blue)
+                    Text(grammar)
+                        .font(.caption)
+                        .foregroundStyle(.primary.opacity(0.85))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+    }
+
+    // MARK: - Correction Mode
+
+    private func correctionView(_ r: LangResponse) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            // Corrected sentence (main result)
+            if let corrected = r.correctedText, !corrected.isEmpty {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(corrected)
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            // What was wrong
+            if let issues = r.originalIssues, !issues.isEmpty {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Issues")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.orange)
+                    Text(issues)
+                        .font(.caption)
+                        .foregroundStyle(.primary.opacity(0.85))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            // Grammar explanation
+            if let grammar = r.grammar, !grammar.isEmpty {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Grammar")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.blue)
+                    Text(grammar)
+                        .font(.caption)
+                        .foregroundStyle(.primary.opacity(0.85))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            // What you meant (native lang translation)
+            if let translation = r.translation, !translation.isEmpty {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Meaning")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.purple)
+                    Text(translation)
+                        .font(.caption)
+                        .foregroundStyle(.primary.opacity(0.85))
+                }
+            }
+        }
+    }
+
+    // MARK: - Pronunciation Mode
+
+    private func pronunciationView(_ r: LangResponse) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            // IPA phonetic
+            if let phonetic = r.phonetic, !phonetic.isEmpty {
+                Text(phonetic)
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .fontDesign(.serif)
+                    .foregroundStyle(.primary)
+            }
+
+            // Simplified pronunciation
+            if let pronunciation = r.pronunciation, !pronunciation.isEmpty {
+                HStack(spacing: 4) {
+                    Image(systemName: "speaker.wave.2")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text(pronunciation)
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            // Sound breakdown
+            if let breakdown = r.soundBreakdown, !breakdown.isEmpty {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Sounds")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.teal)
+                    Text(breakdown)
+                        .font(.caption)
+                        .foregroundStyle(.primary.opacity(0.85))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            // Meaning
+            if let translation = r.translation, !translation.isEmpty {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Meaning")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.purple)
+                    Text(translation)
+                        .font(.caption)
+                        .foregroundStyle(.primary.opacity(0.85))
+                }
+            }
+        }
+    }
+
+    // MARK: - Mode Badge Helpers
+
+    private func modeBadgeIcon(_ r: LangResponse) -> String {
+        if r.isPronunciation { return "waveform" }
+        if r.isCorrection { return "checkmark.circle" }
+        return "textformat"
+    }
+
+    private func modeBadgeLabel(_ r: LangResponse) -> String {
+        if r.isPronunciation { return "Pronunciation" }
+        if r.isCorrection { return "Correction" }
+        return "Translation"
+    }
+
+    private func modeBadgeColor(_ r: LangResponse) -> Color {
+        if r.isPronunciation { return .teal }
+        if r.isCorrection { return .orange }
+        return .blue
     }
 
     private func difficultyColor(_ level: String) -> Color {

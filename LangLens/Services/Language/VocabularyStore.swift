@@ -25,4 +25,16 @@ actor VocabularyStore {
     func loadRecent(_ count: Int = 10) async -> [VocabEntry] {
         Array(await loadAll().prefix(count))
     }
+
+    func delete(_ id: UUID) async throws {
+        var entries = await loadAll()
+        entries.removeAll { $0.id == id }
+        let data = try JSONEncoder().encode(entries)
+        try data.write(to: fileURL, options: .atomic)
+    }
+
+    func clearAll() async throws {
+        let data = try JSONEncoder().encode([VocabEntry]())
+        try data.write(to: fileURL, options: .atomic)
+    }
 }

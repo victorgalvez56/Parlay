@@ -12,11 +12,9 @@ struct SettingsView: View {
         let d = UserDefaults.standard.double(forKey: "overlayDuration")
         return d == 0 ? 10 : d
     }()
-    @State private var imageDetail: String = UserDefaults.standard.string(forKey: "imageDetail") ?? "low"
-
+    @State private var hideFromScreenShare: Bool = UserDefaults.standard.object(forKey: "hideFromScreenShare") as? Bool ?? true
     private let levels = ["beginner", "intermediate", "advanced"]
     private let whisperModels = ["tiny", "base", "small", "medium"]
-    private let imageDetails = ["low", "high", "auto"]
 
     var body: some View {
         TabView {
@@ -107,11 +105,6 @@ struct SettingsView: View {
             }
             .onChange(of: whisperModel) { _, val in UserDefaults.standard.set(val, forKey: "whisperModel") }
 
-            Picker("Image Detail", selection: $imageDetail) {
-                ForEach(imageDetails, id: \.self) { Text($0).tag($0) }
-            }
-            .onChange(of: imageDetail) { _, val in UserDefaults.standard.set(val, forKey: "imageDetail") }
-
             HStack {
                 Text("Overlay Duration")
                 Slider(value: $overlayDuration, in: 3...30, step: 1)
@@ -120,6 +113,13 @@ struct SettingsView: View {
                     .frame(width: 30)
             }
             .onChange(of: overlayDuration) { _, val in UserDefaults.standard.set(val, forKey: "overlayDuration") }
+
+            Toggle("Hide overlay during screen sharing", isOn: $hideFromScreenShare)
+                .onChange(of: hideFromScreenShare) { _, val in UserDefaults.standard.set(val, forKey: "hideFromScreenShare") }
+
+            Text("When enabled, the overlay is invisible in screen recordings, screenshots, and screen sharing (Zoom, Meet, Teams, etc.)")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
         .padding()
     }
