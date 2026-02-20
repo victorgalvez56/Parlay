@@ -157,9 +157,29 @@ struct MenuBarView: View {
 
     private func lastResultSection(_ response: LangResponse) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Last Result")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            HStack {
+                Text("Last Result")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button {
+                    let text: String
+                    if response.isPronunciation {
+                        text = response.pronunciation ?? response.mainText
+                    } else if response.isCorrection {
+                        text = response.correctedText ?? response.mainText
+                    } else {
+                        text = response.translation ?? response.mainText
+                    }
+                    SpeechService.shared.speak(text, lang: appState.targetLang)
+                } label: {
+                    Image(systemName: "play.circle.fill")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Listen")
+            }
 
             if let transcription = appState.lastTranscription {
                 Text("Q: \(transcription)")

@@ -196,7 +196,14 @@ final class AppDelegate: NSObject {
                 appState.lastResponse = response
                 appState.isProcessing = false
 
+                overlayController.targetLang = appState.targetLang
                 overlayController.show(response: response, duration: appState.overlayDuration)
+
+                // Auto-play pronunciation
+                if response.isPronunciation {
+                    let text = response.pronunciation ?? response.mainText
+                    SpeechService.shared.speak(text, lang: appState.targetLang)
+                }
 
                 let entry = VocabEntry(
                     word: transcription,

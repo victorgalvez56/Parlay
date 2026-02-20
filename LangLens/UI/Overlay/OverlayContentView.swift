@@ -3,6 +3,8 @@ import SwiftUI
 struct OverlayContentView: View {
     let response: LangResponse?
     let isProcessing: Bool
+    var targetLang: String = "en"
+    var onPlaySound: ((String, String) -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -33,15 +35,30 @@ struct OverlayContentView: View {
 
     private func responseView(_ r: LangResponse) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            // Mode badge
-            HStack(spacing: 4) {
-                Image(systemName: modeBadgeIcon(r))
-                    .font(.caption2)
-                Text(modeBadgeLabel(r))
-                    .font(.caption2)
-                    .fontWeight(.semibold)
+            // Mode badge + play button
+            HStack {
+                HStack(spacing: 4) {
+                    Image(systemName: modeBadgeIcon(r))
+                        .font(.caption2)
+                    Text(modeBadgeLabel(r))
+                        .font(.caption2)
+                        .fontWeight(.semibold)
+                }
+                .foregroundStyle(modeBadgeColor(r))
+
+                Spacer()
+
+                Button {
+                    let text = speakableText(r)
+                    onPlaySound?(text, targetLang)
+                } label: {
+                    Image(systemName: "play.circle.fill")
+                        .font(.title3)
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Listen")
             }
-            .foregroundStyle(modeBadgeColor(r))
 
             if r.isPronunciation {
                 pronunciationView(r)
@@ -257,6 +274,17 @@ struct OverlayContentView: View {
         if r.isPronunciation { return .teal }
         if r.isCorrection { return .orange }
         return .blue
+    }
+
+    private func speakableText(_ r: LangResponse) -> String {
+        if r.isPronunciation {
+            // Speak the word itself, not the IPA
+            return r.pronunciation ?? r.phonetic ?? r.mainText
+        }
+        if r.isCorrection {
+            return r.correctedText ?? r.mainText
+        }
+        return r.translation ?? r.mainText
     }
 
     private func difficultyColor(_ level: String) -> Color {

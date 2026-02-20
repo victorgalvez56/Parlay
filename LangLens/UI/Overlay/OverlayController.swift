@@ -5,6 +5,7 @@ import SwiftUI
 final class OverlayController {
     private var panel: OverlayPanel?
     private var dismissTask: Task<Void, Never>?
+    var targetLang: String = "en"
 
     func showProcessing() {
         show(response: nil, isProcessing: true, duration: 0)
@@ -33,7 +34,13 @@ final class OverlayController {
         panel?.orderOut(nil)
 
         guard let screen = NSScreen.main else { return }
-        let content = OverlayContentView(response: response, isProcessing: isProcessing)
+        let content = OverlayContentView(
+            response: response,
+            isProcessing: isProcessing,
+            targetLang: targetLang
+        ) { text, lang in
+            SpeechService.shared.speak(text, lang: lang)
+        }
         let hostView = NSHostingView(rootView: content)
         hostView.frame.size = hostView.fittingSize
 

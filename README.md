@@ -21,11 +21,21 @@ Browse your full learning history from the menu bar:
 - Delete individual entries or clear all
 - Opens in a dedicated resizable window
 
+### Text-to-Speech
+
+Hear how words and sentences actually sound:
+
+- Play button on the overlay and menu bar to listen to any result
+- Auto-plays pronunciation when in pronunciation mode
+- Uses macOS native speech synthesis — supports all 18 languages
+- Speaks translations, corrected sentences, or individual words
+
 ### Floating Overlay
 
-Responses appear in a non-intrusive floating overlay on top of any app:
+Responses appear in a floating overlay on top of any app:
 
 - Color-coded mode badges (Translation, Correction, Pronunciation)
+- Interactive play button to hear the result spoken aloud
 - Hidden from screen sharing by default (Zoom, Meet, Teams)
 - Configurable display duration
 
