@@ -11,11 +11,14 @@ final class AppDelegate: NSObject {
     private let vocabularyStore = VocabularyStore()
     private let languageContext = LanguageContext()
     private lazy var overlayController = OverlayController()
+    private let writingMonitor = WritingMonitorService()
+    private lazy var writingAlertController = WritingAlertController()
 
     func setup() {
         checkPermissions()
         setupHotkey()
         loadWhisperModel()
+        setupWritingMonitor()
         Task { await loadRecentVocab() }
         observeWindowVisibility()
     }
@@ -120,6 +123,27 @@ final class AppDelegate: NSObject {
             try? await vocabularyStore.clearAll()
             await loadAllVocab()
             await loadRecentVocab()
+        }
+    }
+
+    // MARK: - Writing Monitor
+
+    private func setupWritingMonitor() {
+        writingMonitor.onWritingError = { [weak self] alert in
+            self?.writingAlertController.show(alert: alert)
+        }
+    }
+
+    func toggleWritingMonitor() {
+        appState.isWritingMonitorEnabled.toggle()
+        if appState.isWritingMonitorEnabled {
+            writingMonitor.targetLang = appState.targetLang
+            writingMonitor.nativeLang = appState.nativeLang
+            writingMonitor.level = appState.learningLevel
+            writingMonitor.start()
+        } else {
+            writingMonitor.stop()
+            writingAlertController.dismiss()
         }
     }
 

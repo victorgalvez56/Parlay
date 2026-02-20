@@ -69,4 +69,37 @@ enum PromptBuilder {
         }
         """
     }
+
+    static func buildWritingCheckPrompt(
+        text: String,
+        targetLang: String,
+        nativeLang: String,
+        level: String
+    ) -> String {
+        let target = LanguagePair.name(for: targetLang)
+        let native = LanguagePair.name(for: nativeLang)
+
+        return """
+        You are a writing assistant for a \(native) speaker learning \(target) (\(level) level).
+
+        The student just typed: "\(text)"
+
+        Check if this text in \(target) has any grammar, spelling, or word choice errors.
+
+        Rules:
+        - If the text is NOT in \(target), set "hasErrors" to false (ignore non-target language text).
+        - If the text is correct, set "hasErrors" to false.
+        - If there are errors, set "hasErrors" to true, provide the corrected version, explain the issues briefly in \(native), and give a short suggestion.
+        - Be concise. This runs in real-time so keep responses minimal.
+        - Respond ONLY with valid JSON (no markdown).
+
+        JSON format:
+        {
+          "hasErrors": true or false,
+          "correctedText": "The corrected sentence, or null if no errors",
+          "issues": "Brief explanation in \(native) of what was wrong, or null",
+          "suggestion": "One-line tip in \(native), or null"
+        }
+        """
+    }
 }

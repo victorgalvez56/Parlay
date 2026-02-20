@@ -14,6 +14,9 @@ final class AppState {
     var lastResponse: LangResponse?
     var errorMessage: String?
 
+    // MARK: - Writing Monitor
+    var isWritingMonitorEnabled = false
+
     // MARK: - Vocabulary
     var recentVocab: [VocabEntry] = []
     var allVocab: [VocabEntry] = []
