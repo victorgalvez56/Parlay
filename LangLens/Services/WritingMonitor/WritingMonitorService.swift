@@ -13,6 +13,7 @@ final class WritingMonitorService {
     var nativeLang: String = "es"
     var level: String = "intermediate"
     var onWritingError: ((WritingAlert) -> Void)?
+    var onStatusChange: ((AppState.WritingMonitorStatus) -> Void)?
 
     private let openAIService = OpenAIService()
 
@@ -20,7 +21,9 @@ final class WritingMonitorService {
 
     func start() {
         guard pollTimer == nil else { return }
-        Log.info("[WritingMonitor] Started")
+        lastText = ""
+        lastAnalyzedText = ""
+        Log.info("[WritingMonitor] Started — target: \(targetLang), native: \(nativeLang)")
         pollTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.pollFocusedText()
@@ -42,33 +45,51 @@ final class WritingMonitorService {
     // MARK: - Polling
 
     private func pollFocusedText() {
-        guard let text = readFocusedTextFieldValue(), !text.isEmpty else { return }
-        guard text != lastText else { return }
+        guard let text = readFocusedTextFieldValue() else { return }
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        guard trimmed != lastText else { return }
 
-        lastText = text
+        Log.info("[WritingMonitor] Text changed (\(trimmed.count) chars)")
+        lastText = trimmed
+        onStatusChange?(.watching)
         debounceTask?.cancel()
         debounceTask = Task { @MainActor [weak self] in
             try? await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
             guard !Task.isCancelled else { return }
-            self?.analyzeIfNeeded(text)
+            self?.analyzeIfNeeded(trimmed)
         }
     }
 
     private func analyzeIfNeeded(_ text: String) {
-        // Only analyze the last sentence/chunk
         let sentence = extractLastSentence(text)
-        guard !sentence.isEmpty, sentence.count >= 5 else { return }
-        guard sentence != lastAnalyzedText else { return }
-        guard !isAnalyzing else { return }
+        guard !sentence.isEmpty, sentence.count >= 3 else {
+            Log.info("[WritingMonitor] Skipped — sentence too short: \"\(sentence)\"")
+            return
+        }
+        guard sentence != lastAnalyzedText else {
+            Log.info("[WritingMonitor] Skipped — already analyzed")
+            return
+        }
+        guard !isAnalyzing else {
+            Log.info("[WritingMonitor] Skipped — already analyzing")
+            return
+        }
 
         lastAnalyzedText = sentence
         isAnalyzing = true
+        onStatusChange?(.checking)
+        Log.info("[WritingMonitor] Analyzing: \"\(sentence)\"")
 
         Task { @MainActor [weak self] in
-            defer { self?.isAnalyzing = false }
+            defer {
+                self?.isAnalyzing = false
+                self?.onStatusChange?(.idle)
+            }
             guard let self else { return }
             do {
                 let alert = try await self.checkWriting(sentence)
+                Log.info("[WritingMonitor] Result — hasErrors: \(alert.hasErrors), corrected: \(alert.correctedText ?? "nil")")
                 if alert.hasErrors {
                     self.onWritingError?(alert)
                 }
@@ -81,26 +102,39 @@ final class WritingMonitorService {
     // MARK: - Accessibility
 
     private func readFocusedTextFieldValue() -> String? {
-        guard AccessibilityPermission.hasPermission() else { return nil }
+        guard AccessibilityPermission.hasPermission() else {
+            return nil
+        }
 
         let systemWide = AXUIElementCreateSystemWide()
-        var focusedApp: AnyObject?
-        guard AXUIElementCopyAttributeValue(systemWide, kAXFocusedApplicationAttribute as CFString, &focusedApp) == .success else {
+
+        var focusedAppRef: AnyObject?
+        guard AXUIElementCopyAttributeValue(systemWide, kAXFocusedApplicationAttribute as CFString, &focusedAppRef) == .success,
+              let focusedApp = focusedAppRef as! AXUIElement? else {
             return nil
         }
 
-        var focusedElement: AnyObject?
-        guard AXUIElementCopyAttributeValue(focusedApp as! AXUIElement, kAXFocusedUIElementAttribute as CFString, &focusedElement) == .success else {
+        var focusedElementRef: AnyObject?
+        guard AXUIElementCopyAttributeValue(focusedApp, kAXFocusedUIElementAttribute as CFString, &focusedElementRef) == .success,
+              let focusedElement = focusedElementRef as! AXUIElement? else {
             return nil
         }
 
-        let element = focusedElement as! AXUIElement
+        // Try kAXValueAttribute first (standard text fields)
         var value: AnyObject?
-        guard AXUIElementCopyAttributeValue(element, kAXValueAttribute as CFString, &value) == .success else {
-            return nil
+        if AXUIElementCopyAttributeValue(focusedElement, kAXValueAttribute as CFString, &value) == .success,
+           let text = value as? String {
+            return text
         }
 
-        return value as? String
+        // Fallback: try selected text
+        var selectedText: AnyObject?
+        if AXUIElementCopyAttributeValue(focusedElement, kAXSelectedTextAttribute as CFString, &selectedText) == .success,
+           let text = selectedText as? String, !text.isEmpty {
+            return text
+        }
+
+        return nil
     }
 
     // MARK: - Analysis
@@ -113,21 +147,20 @@ final class WritingMonitorService {
             level: level
         )
 
-        let response = try await openAIService.analyzeWriting(prompt: prompt)
-        return response
+        return try await openAIService.analyzeWriting(prompt: prompt)
     }
 
     // MARK: - Helpers
 
     private func extractLastSentence(_ text: String) -> String {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        // Split by sentence-ending punctuation or newlines
         let separators = CharacterSet(charactersIn: ".!?\n")
-        let parts = trimmed.components(separatedBy: separators).filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+        let parts = trimmed.components(separatedBy: separators)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
 
-        // Get the last complete sentence or current partial
         if let last = parts.last {
-            return last.trimmingCharacters(in: .whitespacesAndNewlines)
+            return last
         }
         return trimmed
     }

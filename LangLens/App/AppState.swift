@@ -16,6 +16,13 @@ final class AppState {
 
     // MARK: - Writing Monitor
     var isWritingMonitorEnabled = false
+    var writingMonitorStatus: WritingMonitorStatus = .idle
+
+    enum WritingMonitorStatus: Equatable {
+        case idle
+        case watching
+        case checking
+    }
 
     // MARK: - Vocabulary
     var recentVocab: [VocabEntry] = []

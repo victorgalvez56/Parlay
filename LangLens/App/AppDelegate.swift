@@ -13,6 +13,7 @@ final class AppDelegate: NSObject {
     private lazy var overlayController = OverlayController()
     private let writingMonitor = WritingMonitorService()
     private lazy var writingAlertController = WritingAlertController()
+    private lazy var writingIndicator = WritingMonitorIndicator()
 
     func setup() {
         checkPermissions()
@@ -132,6 +133,10 @@ final class AppDelegate: NSObject {
         writingMonitor.onWritingError = { [weak self] alert in
             self?.writingAlertController.show(alert: alert)
         }
+        writingMonitor.onStatusChange = { [weak self] status in
+            self?.appState.writingMonitorStatus = status
+            self?.writingIndicator.show(status: status)
+        }
     }
 
     func toggleWritingMonitor() {
@@ -144,6 +149,8 @@ final class AppDelegate: NSObject {
         } else {
             writingMonitor.stop()
             writingAlertController.dismiss()
+            writingIndicator.hide()
+            appState.writingMonitorStatus = .idle
         }
     }
 
