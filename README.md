@@ -21,20 +21,6 @@ Browse your full learning history from the menu bar:
 - Delete individual entries or clear all
 - Opens in a dedicated resizable window
 
-### Writing Monitor
-
-Real-time writing assistant that watches what you type in any app:
-
-- Toggle ON/OFF from the menu bar
-- Reads the focused text field using the macOS Accessibility API
-- Waits for you to pause typing (2s debounce), then checks your text
-- **Visual highlight on the text field** being scanned:
-  - Green border + "Watching" label when monitoring your typing
-  - Orange border + "Checking..." label with spinner when analyzing
-- Shows a floating alert with corrections, explanations (in your native language), and tips
-- Uses GPT-4o-mini for fast, low-cost checks
-- Ignores text not in your target language
-
 ### Text-to-Speech
 
 Hear how words and sentences actually sound:

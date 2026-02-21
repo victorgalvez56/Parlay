@@ -14,16 +14,6 @@ final class AppState {
     var lastResponse: LangResponse?
     var errorMessage: String?
 
-    // MARK: - Writing Monitor
-    var isWritingMonitorEnabled = false
-    var writingMonitorStatus: WritingMonitorStatus = .idle
-
-    enum WritingMonitorStatus: Equatable {
-        case idle
-        case watching
-        case checking
-    }
-
     // MARK: - Vocabulary
     var recentVocab: [VocabEntry] = []
     var allVocab: [VocabEntry] = []

@@ -11,8 +11,6 @@ struct MenuBarView: View {
             statusSection
             Divider()
             actionSection
-            Divider()
-            writingMonitorSection
             if !appState.allPermissionsGranted {
                 Divider()
                 permissionsSection
@@ -153,32 +151,6 @@ struct MenuBarView: View {
             }
         }
         .buttonStyle(.plain)
-    }
-
-    // MARK: - Writing Monitor
-
-    private var writingMonitorSection: some View {
-        Button {
-            delegate.toggleWritingMonitor()
-        } label: {
-            HStack {
-                Image(systemName: appState.isWritingMonitorEnabled ? "pencil.circle.fill" : "pencil.circle")
-                    .foregroundStyle(appState.isWritingMonitorEnabled ? .green : .secondary)
-                Text("Writing Monitor")
-                    .font(.callout)
-                Spacer()
-                Text(appState.isWritingMonitorEnabled ? "ON" : "OFF")
-                    .font(.caption2)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(appState.isWritingMonitorEnabled ? .green : .secondary)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(appState.isWritingMonitorEnabled ? .green.opacity(0.15) : .secondary.opacity(0.1))
-                    .clipShape(Capsule())
-            }
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 6)
     }
 
     // MARK: - Last Result
