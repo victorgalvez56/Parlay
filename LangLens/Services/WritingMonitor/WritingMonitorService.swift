@@ -103,43 +103,11 @@ final class WritingMonitorService {
 
     // MARK: - Accessibility
 
-    private func readFocusedTextFieldValue() -> String? {
-        guard AccessibilityPermission.hasPermission() else {
-            return nil
-        }
+    private static let textRoles: Set<String> = [
+        "AXTextField", "AXTextArea", "AXComboBox", "AXSearchField"
+    ]
 
-        let systemWide = AXUIElementCreateSystemWide()
-
-        var focusedAppRef: AnyObject?
-        guard AXUIElementCopyAttributeValue(systemWide, kAXFocusedApplicationAttribute as CFString, &focusedAppRef) == .success,
-              let focusedApp = focusedAppRef as! AXUIElement? else {
-            return nil
-        }
-
-        var focusedElementRef: AnyObject?
-        guard AXUIElementCopyAttributeValue(focusedApp, kAXFocusedUIElementAttribute as CFString, &focusedElementRef) == .success,
-              let focusedElement = focusedElementRef as! AXUIElement? else {
-            return nil
-        }
-
-        // Try kAXValueAttribute first (standard text fields)
-        var value: AnyObject?
-        if AXUIElementCopyAttributeValue(focusedElement, kAXValueAttribute as CFString, &value) == .success,
-           let text = value as? String {
-            return text
-        }
-
-        // Fallback: try selected text
-        var selectedText: AnyObject?
-        if AXUIElementCopyAttributeValue(focusedElement, kAXSelectedTextAttribute as CFString, &selectedText) == .success,
-           let text = selectedText as? String, !text.isEmpty {
-            return text
-        }
-
-        return nil
-    }
-
-    private func readFocusedElementFrame() -> NSRect? {
+    private func getFocusedElement() -> AXUIElement? {
         guard AccessibilityPermission.hasPermission() else { return nil }
 
         let systemWide = AXUIElementCreateSystemWide()
@@ -156,10 +124,52 @@ final class WritingMonitorService {
             return nil
         }
 
+        return focusedElement
+    }
+
+    private func roleOf(_ element: AXUIElement) -> String? {
+        var roleRef: AnyObject?
+        guard AXUIElementCopyAttributeValue(element, kAXRoleAttribute as CFString, &roleRef) == .success else {
+            return nil
+        }
+        return roleRef as? String
+    }
+
+    private func isTextInput(_ element: AXUIElement) -> Bool {
+        guard let role = roleOf(element) else { return false }
+        return Self.textRoles.contains(role)
+    }
+
+    private func readFocusedTextFieldValue() -> String? {
+        guard let element = getFocusedElement() else { return nil }
+
+        // Try kAXValueAttribute first (standard text fields)
+        var value: AnyObject?
+        if AXUIElementCopyAttributeValue(element, kAXValueAttribute as CFString, &value) == .success,
+           let text = value as? String {
+            return text
+        }
+
+        // Fallback: try selected text
+        var selectedText: AnyObject?
+        if AXUIElementCopyAttributeValue(element, kAXSelectedTextAttribute as CFString, &selectedText) == .success,
+           let text = selectedText as? String, !text.isEmpty {
+            return text
+        }
+
+        return nil
+    }
+
+    private func readFocusedElementFrame() -> NSRect? {
+        guard let element = getFocusedElement() else { return nil }
+
+        // Only highlight actual text input elements
+        guard isTextInput(element) else { return nil }
+
         var positionRef: AnyObject?
         var sizeRef: AnyObject?
-        guard AXUIElementCopyAttributeValue(focusedElement, kAXPositionAttribute as CFString, &positionRef) == .success,
-              AXUIElementCopyAttributeValue(focusedElement, kAXSizeAttribute as CFString, &sizeRef) == .success else {
+        guard AXUIElementCopyAttributeValue(element, kAXPositionAttribute as CFString, &positionRef) == .success,
+              AXUIElementCopyAttributeValue(element, kAXSizeAttribute as CFString, &sizeRef) == .success else {
             return nil
         }
 
@@ -170,8 +180,12 @@ final class WritingMonitorService {
             return nil
         }
 
-        // Convert from top-left origin (Accessibility) to bottom-left origin (AppKit)
+        // Ignore elements that are too large (likely a window, not a text field)
         guard let screen = NSScreen.main else { return nil }
+        let maxArea = screen.frame.width * screen.frame.height * 0.5
+        guard size.width * size.height < maxArea else { return nil }
+
+        // Convert from top-left origin (Accessibility) to bottom-left origin (AppKit)
         let flippedY = screen.frame.height - position.y - size.height
         return NSRect(x: position.x, y: flippedY, width: size.width, height: size.height)
     }
