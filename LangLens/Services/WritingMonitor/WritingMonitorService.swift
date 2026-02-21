@@ -13,7 +13,7 @@ final class WritingMonitorService {
     var nativeLang: String = "es"
     var level: String = "intermediate"
     var onWritingError: ((WritingAlert) -> Void)?
-    var onStatusChange: ((AppState.WritingMonitorStatus) -> Void)?
+    var onStatusChange: ((AppState.WritingMonitorStatus, NSRect?) -> Void)?
 
     private let openAIService = OpenAIService()
 
@@ -52,7 +52,8 @@ final class WritingMonitorService {
 
         Log.info("[WritingMonitor] Text changed (\(trimmed.count) chars)")
         lastText = trimmed
-        onStatusChange?(.watching)
+        let elementFrame = readFocusedElementFrame()
+        onStatusChange?(.watching, elementFrame)
         debounceTask?.cancel()
         debounceTask = Task { @MainActor [weak self] in
             try? await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
@@ -78,13 +79,14 @@ final class WritingMonitorService {
 
         lastAnalyzedText = sentence
         isAnalyzing = true
-        onStatusChange?(.checking)
+        let elementFrame = readFocusedElementFrame()
+        onStatusChange?(.checking, elementFrame)
         Log.info("[WritingMonitor] Analyzing: \"\(sentence)\"")
 
         Task { @MainActor [weak self] in
             defer {
                 self?.isAnalyzing = false
-                self?.onStatusChange?(.idle)
+                self?.onStatusChange?(.idle, nil)
             }
             guard let self else { return }
             do {
@@ -135,6 +137,43 @@ final class WritingMonitorService {
         }
 
         return nil
+    }
+
+    private func readFocusedElementFrame() -> NSRect? {
+        guard AccessibilityPermission.hasPermission() else { return nil }
+
+        let systemWide = AXUIElementCreateSystemWide()
+
+        var focusedAppRef: AnyObject?
+        guard AXUIElementCopyAttributeValue(systemWide, kAXFocusedApplicationAttribute as CFString, &focusedAppRef) == .success,
+              let focusedApp = focusedAppRef as! AXUIElement? else {
+            return nil
+        }
+
+        var focusedElementRef: AnyObject?
+        guard AXUIElementCopyAttributeValue(focusedApp, kAXFocusedUIElementAttribute as CFString, &focusedElementRef) == .success,
+              let focusedElement = focusedElementRef as! AXUIElement? else {
+            return nil
+        }
+
+        var positionRef: AnyObject?
+        var sizeRef: AnyObject?
+        guard AXUIElementCopyAttributeValue(focusedElement, kAXPositionAttribute as CFString, &positionRef) == .success,
+              AXUIElementCopyAttributeValue(focusedElement, kAXSizeAttribute as CFString, &sizeRef) == .success else {
+            return nil
+        }
+
+        var position = CGPoint.zero
+        var size = CGSize.zero
+        guard AXValueGetValue(positionRef as! AXValue, .cgPoint, &position),
+              AXValueGetValue(sizeRef as! AXValue, .cgSize, &size) else {
+            return nil
+        }
+
+        // Convert from top-left origin (Accessibility) to bottom-left origin (AppKit)
+        guard let screen = NSScreen.main else { return nil }
+        let flippedY = screen.frame.height - position.y - size.height
+        return NSRect(x: position.x, y: flippedY, width: size.width, height: size.height)
     }
 
     // MARK: - Analysis

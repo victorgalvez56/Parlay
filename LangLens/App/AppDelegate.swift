@@ -133,9 +133,9 @@ final class AppDelegate: NSObject {
         writingMonitor.onWritingError = { [weak self] alert in
             self?.writingAlertController.show(alert: alert)
         }
-        writingMonitor.onStatusChange = { [weak self] status in
+        writingMonitor.onStatusChange = { [weak self] status, frame in
             self?.appState.writingMonitorStatus = status
-            self?.writingIndicator.show(status: status)
+            self?.writingIndicator.show(status: status, elementFrame: frame)
         }
     }
 
