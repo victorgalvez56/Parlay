@@ -163,9 +163,55 @@ final class WritingMonitorService {
     private func readFocusedElementFrame() -> NSRect? {
         guard let element = getFocusedElement() else { return nil }
 
-        // Only highlight actual text input elements
-        guard isTextInput(element) else { return nil }
+        // Try 1: Get caret/insertion point bounds via AX parameterized attribute
+        if let caretRect = caretBounds(for: element) {
+            return caretRect
+        }
 
+        // Try 2: For standard text fields, get the element frame
+        if isTextInput(element) {
+            return elementFrame(for: element)
+        }
+
+        // Try 3: Fall back to mouse cursor position
+        return cursorFrame()
+    }
+
+    private func caretBounds(for element: AXUIElement) -> NSRect? {
+        // Get the selected text range (cursor position)
+        var rangeRef: AnyObject?
+        guard AXUIElementCopyAttributeValue(element, kAXSelectedTextRangeAttribute as CFString, &rangeRef) == .success else {
+            return nil
+        }
+
+        // Get the screen bounds of that range
+        var boundsRef: AnyObject?
+        guard AXUIElementCopyParameterizedAttributeValue(
+            element,
+            kAXBoundsForRangeParameterizedAttribute as CFString,
+            rangeRef!,
+            &boundsRef
+        ) == .success else {
+            return nil
+        }
+
+        var bounds = CGRect.zero
+        guard AXValueGetValue(boundsRef as! AXValue, .cgRect, &bounds) else {
+            return nil
+        }
+
+        // If bounds are zero-width (just a cursor), expand slightly
+        if bounds.width < 2 {
+            bounds.origin.x -= 1
+            bounds.size.width = 4
+        }
+
+        guard let screen = NSScreen.main else { return nil }
+        let flippedY = screen.frame.height - bounds.origin.y - bounds.height
+        return NSRect(x: bounds.origin.x, y: flippedY, width: bounds.width, height: bounds.height)
+    }
+
+    private func elementFrame(for element: AXUIElement) -> NSRect? {
         var positionRef: AnyObject?
         var sizeRef: AnyObject?
         guard AXUIElementCopyAttributeValue(element, kAXPositionAttribute as CFString, &positionRef) == .success,
@@ -180,14 +226,18 @@ final class WritingMonitorService {
             return nil
         }
 
-        // Ignore elements that are too large (likely a window, not a text field)
         guard let screen = NSScreen.main else { return nil }
         let maxArea = screen.frame.width * screen.frame.height * 0.5
         guard size.width * size.height < maxArea else { return nil }
 
-        // Convert from top-left origin (Accessibility) to bottom-left origin (AppKit)
         let flippedY = screen.frame.height - position.y - size.height
         return NSRect(x: position.x, y: flippedY, width: size.width, height: size.height)
+    }
+
+    private func cursorFrame() -> NSRect? {
+        let mouseLocation = NSEvent.mouseLocation
+        // Small rect around the mouse cursor
+        return NSRect(x: mouseLocation.x - 2, y: mouseLocation.y - 10, width: 4, height: 20)
     }
 
     // MARK: - Analysis
