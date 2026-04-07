@@ -68,6 +68,11 @@ final class AppState {
         set { UserDefaults.standard.set(newValue, forKey: "hideFromScreenShare") }
     }
 
+    var hasCompletedOnboarding: Bool {
+        get { UserDefaults.standard.bool(forKey: "hasCompletedOnboarding") }
+        set { UserDefaults.standard.set(newValue, forKey: "hasCompletedOnboarding") }
+    }
+
     var menuBarIcon: String {
         if isRecording { return "waveform.circle.fill" }
         if isProcessing { return "ellipsis.circle.fill" }

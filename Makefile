@@ -2,7 +2,7 @@ APP_NAME = LangLens
 APP_BUNDLE = $(APP_NAME).app
 SIGN_ID = Apple Development: Victor Galvez (7BVX533M64)
 
-.PHONY: dev watch build bundle run install clean
+.PHONY: dev watch build bundle run install clean dmg
 
 # Dev: debug build + relaunch app bundle (~2-3s incremental)
 dev:
@@ -41,6 +41,19 @@ run: bundle
 install: bundle
 	cp -R $(APP_BUNDLE) /Applications/$(APP_BUNDLE)
 	@echo "✅ Installed to /Applications/$(APP_BUNDLE)"
+
+dmg: bundle
+	@echo "📦 Creating DMG..."
+	@rm -rf /tmp/$(APP_NAME)-dmg
+	@mkdir /tmp/$(APP_NAME)-dmg
+	@cp -R $(APP_BUNDLE) /tmp/$(APP_NAME)-dmg/
+	@ln -s /Applications /tmp/$(APP_NAME)-dmg/Applications
+	@hdiutil create -volname "$(APP_NAME)" \
+		-srcfolder /tmp/$(APP_NAME)-dmg \
+		-ov -format UDZO \
+		$(APP_NAME).dmg
+	@rm -rf /tmp/$(APP_NAME)-dmg
+	@echo "✅ $(APP_NAME).dmg ready"
 
 clean:
 	swift package clean

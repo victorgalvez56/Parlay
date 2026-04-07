@@ -18,6 +18,18 @@ final class AppDelegate: NSObject {
         loadWhisperModel()
         Task { await loadRecentVocab() }
         observeWindowVisibility()
+        showOnboardingIfNeeded()
+    }
+
+    // MARK: - Onboarding
+
+    private func showOnboardingIfNeeded() {
+        guard !appState.hasCompletedOnboarding else { return }
+        Log.info("[AppDelegate] Onboarding not completed, will show window")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            Log.info("[AppDelegate] Showing onboarding window now")
+            OnboardingWindowController.shared.show(appState: self.appState, delegate: self)
+        }
     }
 
     // MARK: - Screen Share Visibility
@@ -33,6 +45,7 @@ final class AppDelegate: NSObject {
                 let hide = UserDefaults.standard.object(forKey: "hideFromScreenShare") as? Bool ?? true
                 guard hide else { return }
                 if window.title == "LangLens Settings" { return }
+                if window.title == "Welcome to LangLens" { return }
                 if window.sharingType != .none {
                     window.sharingType = .none
                 }

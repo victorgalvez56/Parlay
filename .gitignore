@@ -8,3 +8,5 @@ LangLens.app/Contents/MacOS/
 LangLens.app/Contents/Resources/
 LangLens.app/Contents/_CodeSignature/
 AppIcon.icns
+LangLens.app/
+*.dmg
