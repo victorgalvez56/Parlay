@@ -2,7 +2,7 @@ import Foundation
 import os
 
 enum Log {
-    private static let logger = Logger(subsystem: "com.victorgalvez.LangLens", category: "app")
+    private static let logger = Logger(subsystem: "com.victorgalvez.Parlay", category: "app")
     private static let logFile: URL = {
         let dir = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".config/langlens")
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)

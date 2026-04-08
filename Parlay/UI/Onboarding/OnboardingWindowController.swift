@@ -18,7 +18,7 @@ final class OnboardingWindowController {
         }
         let hostingController = NSHostingController(rootView: view)
         let newWindow = NSWindow(contentViewController: hostingController)
-        newWindow.title = "Welcome to LangLens"
+        newWindow.title = "Welcome to Parlay"
         newWindow.styleMask = [.titled, .closable]
         newWindow.setContentSize(NSSize(width: 480, height: 400))
         newWindow.isReleasedWhenClosed = false

@@ -1,4 +1,4 @@
-APP_NAME = LangLens
+APP_NAME = Parlay
 APP_BUNDLE = $(APP_NAME).app
 SIGN_ID = Apple Development: Victor Galvez (7BVX533M64)
 
@@ -9,7 +9,7 @@ dev:
 	@swift build 2>&1 | tail -5
 	@mkdir -p $(APP_BUNDLE)/Contents/MacOS
 	@cp .build/debug/$(APP_NAME) $(APP_BUNDLE)/Contents/MacOS/$(APP_NAME)
-	@codesign --force --sign "$(SIGN_ID)" --entitlements LangLens/Resources/LangLens.entitlements $(APP_BUNDLE)
+	@codesign --force --sign "$(SIGN_ID)" --entitlements Parlay/Resources/Parlay.entitlements $(APP_BUNDLE)
 	@pkill -x $(APP_NAME) 2>/dev/null || true
 	@sleep 0.3
 	@open $(APP_BUNDLE)
@@ -19,7 +19,7 @@ dev:
 watch:
 	@echo "👀 Watching for changes... (Ctrl+C to stop)"
 	@make dev 2>&1 || true
-	@fswatch -o -e ".*" -i "\\.swift$$" LangLens/ | while read; do \
+	@fswatch -o -e ".*" -i "\\.swift$$" Parlay/ | while read; do \
 		echo "🔄 Change detected, rebuilding..."; \
 		make dev 2>&1 || echo "❌ Build failed"; \
 	done
@@ -32,7 +32,7 @@ bundle: build
 	mkdir -p $(APP_BUNDLE)/Contents/MacOS
 	mkdir -p $(APP_BUNDLE)/Contents/Resources
 	cp .build/release/$(APP_NAME) $(APP_BUNDLE)/Contents/MacOS/$(APP_NAME)
-	codesign --force --sign "$(SIGN_ID)" --entitlements LangLens/Resources/LangLens.entitlements $(APP_BUNDLE)
+	codesign --force --sign "$(SIGN_ID)" --entitlements Parlay/Resources/Parlay.entitlements $(APP_BUNDLE)
 	@echo "✅ $(APP_BUNDLE) ready"
 
 run: bundle

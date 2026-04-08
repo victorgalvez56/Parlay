@@ -65,7 +65,7 @@ struct OnboardingView: View {
                 .resizable()
                 .frame(width: 80, height: 80)
 
-            Text("Welcome to LangLens")
+            Text("Welcome to Parlay")
                 .font(.largeTitle)
                 .fontWeight(.bold)
 

@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct LangLensApp: App {
+struct ParlayApp: App {
     @State private var appState = AppState()
     private let adaptor = AppDelegateAdaptor()
 

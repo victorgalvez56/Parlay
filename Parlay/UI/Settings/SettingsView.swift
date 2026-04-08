@@ -140,7 +140,7 @@ final class SettingsWindowController {
         let view = SettingsView()
         let hostingController = NSHostingController(rootView: view)
         let newWindow = NSWindow(contentViewController: hostingController)
-        newWindow.title = "LangLens Settings"
+        newWindow.title = "Parlay Settings"
         newWindow.styleMask = [.titled, .closable]
         newWindow.center()
         newWindow.makeKeyAndOrderFront(nil)

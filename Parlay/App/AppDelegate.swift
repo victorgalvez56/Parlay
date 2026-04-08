@@ -44,8 +44,8 @@ final class AppDelegate: NSObject {
             MainActor.assumeIsolated {
                 let hide = UserDefaults.standard.object(forKey: "hideFromScreenShare") as? Bool ?? true
                 guard hide else { return }
-                if window.title == "LangLens Settings" { return }
-                if window.title == "Welcome to LangLens" { return }
+                if window.title == "Parlay Settings" { return }
+                if window.title == "Welcome to Parlay" { return }
                 if window.sharingType != .none {
                     window.sharingType = .none
                 }

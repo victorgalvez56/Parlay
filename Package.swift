@@ -2,17 +2,17 @@
 import PackageDescription
 
 let package = Package(
-    name: "LangLens",
+    name: "Parlay",
     platforms: [.macOS(.v14)],
     dependencies: [
         .package(url: "https://github.com/argmaxinc/WhisperKit", from: "0.9.0"),
     ],
     targets: [
         .executableTarget(
-            name: "LangLens",
+            name: "Parlay",
             dependencies: ["WhisperKit"],
-            path: "LangLens",
-            exclude: ["Resources/AppInfo.plist", "Resources/LangLens.entitlements"]
+            path: "Parlay",
+            exclude: ["Resources/AppInfo.plist", "Resources/Parlay.entitlements"]
         ),
     ]
 )

@@ -12,7 +12,7 @@ enum KeychainHelper {
     }()
 
     private static var encryptionKey: SymmetricKey {
-        let seed = machineID + "com.victorgalvez.LangLens.salt"
+        let seed = machineID + "com.victorgalvez.Parlay.salt"
         let hash = SHA256.hash(data: Data(seed.utf8))
         return SymmetricKey(data: hash)
     }
