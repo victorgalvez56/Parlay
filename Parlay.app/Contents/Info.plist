@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>Parlay</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.victorgalvez.Parlay</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+    <key>LSUIElement</key>
+    <true/>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Parlay needs microphone access to hear your voice for language practice.</string>
+    <key>NSScreenCaptureUsageDescription</key>
+    <string>Parlay needs screen recording to see what you're reading for contextual help.</string>
+</dict>
+</plist>

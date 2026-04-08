@@ -62,7 +62,7 @@ struct OverlayContentView: View {
                 }
             }
             Text("ANALYZING")
-                .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                .font(.system(size: 10, weight: .semibold))
                 .kerning(2)
                 .foregroundStyle(.white.opacity(0.35))
         }
@@ -91,7 +91,7 @@ struct OverlayContentView: View {
 
             if let note = r.contextNote, !note.isEmpty {
                 Text(note)
-                    .font(.system(size: 11).italic())
+                    .font(.system(size: 11))
                     .foregroundStyle(.white.opacity(0.28))
             }
         }
@@ -105,7 +105,7 @@ struct OverlayContentView: View {
                     .fill(modeAccent)
                     .frame(width: 3, height: 13)
                 Text(modeBadgeLabel(r).uppercased())
-                    .font(.system(size: 9, weight: .bold, design: .monospaced))
+                    .font(.system(size: 9, weight: .bold))
                     .kerning(1.8)
                     .foregroundStyle(modeAccent)
             }
@@ -114,7 +114,7 @@ struct OverlayContentView: View {
 
             if let difficulty = r.difficulty {
                 Text(difficulty.uppercased())
-                    .font(.system(size: 8, weight: .semibold, design: .monospaced))
+                    .font(.system(size: 8, weight: .semibold))
                     .kerning(1.2)
                     .foregroundStyle(difficultyColor(difficulty))
                     .padding(.horizontal, 7)
@@ -146,7 +146,7 @@ struct OverlayContentView: View {
         VStack(alignment: .leading, spacing: 8) {
             if let translation = r.translation {
                 Text(translation)
-                    .font(.system(size: 22, weight: .semibold, design: .serif))
+                    .font(.system(size: 22, weight: .semibold))
                     .foregroundStyle(.white)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -165,7 +165,7 @@ struct OverlayContentView: View {
         VStack(alignment: .leading, spacing: 8) {
             if let corrected = r.correctedText {
                 Text(corrected)
-                    .font(.system(size: 20, weight: .semibold, design: .serif))
+                    .font(.system(size: 20, weight: .semibold))
                     .foregroundStyle(.white)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -187,7 +187,7 @@ struct OverlayContentView: View {
         VStack(alignment: .leading, spacing: 8) {
             if let phonetic = r.phonetic {
                 Text(phonetic)
-                    .font(.system(size: 28, weight: .bold, design: .serif))
+                    .font(.system(size: 28, weight: .bold))
                     .foregroundStyle(modeAccent)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -208,7 +208,7 @@ struct OverlayContentView: View {
     private func examplesSection(_ r: LangResponse) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(r.isPronunciation ? "IN CONTEXT" : r.isCorrection ? "ALTERNATIVES" : "EXAMPLES")
-                .font(.system(size: 8, weight: .bold, design: .monospaced))
+                .font(.system(size: 8, weight: .bold))
                 .kerning(1.5)
                 .foregroundStyle(.white.opacity(0.28))
 
@@ -238,7 +238,7 @@ struct OverlayContentView: View {
                 .padding(.bottom, 2)
             VStack(alignment: .leading, spacing: 2) {
                 Text(label)
-                    .font(.system(size: 8, weight: .bold, design: .monospaced))
+                    .font(.system(size: 8, weight: .bold))
                     .kerning(1.5)
                     .foregroundStyle(color)
                 Text(content)
@@ -255,7 +255,7 @@ struct OverlayContentView: View {
                 .font(.system(size: 9))
                 .foregroundStyle(modeAccent.opacity(0.6))
             Text(text)
-                .font(.system(size: 12, design: .monospaced))
+                .font(.system(size: 12))
                 .foregroundStyle(.white.opacity(0.42))
         }
     }

@@ -3,7 +3,7 @@ import Foundation
 actor VocabularyStore {
     private let fileURL: URL = {
         let dir = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(".config/langlens")
+            .appendingPathComponent(".config/parlay")
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir.appendingPathComponent("vocabulary.json")
     }()

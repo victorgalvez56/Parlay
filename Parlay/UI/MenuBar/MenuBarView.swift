@@ -6,63 +6,97 @@ struct MenuBarView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            // Subtle top-edge highlight simulating light catching the glass
+            Rectangle()
+                .fill(
+                    LinearGradient(
+                        colors: [.white.opacity(0), .white.opacity(0.15), .white.opacity(0)],
+                        startPoint: .leading, endPoint: .trailing
+                    )
+                )
+                .frame(height: 0.5)
+
             headerSection
+            glassDivider
             statusStrip
-            Divider()
+            glassDivider
             actionSection
             if !appState.allPermissionsGranted {
-                Divider()
+                glassDivider
                 permissionsSection
             }
             if let response = appState.lastResponse {
-                Divider()
+                glassDivider
                 lastResultCard(response)
             }
-            Divider()
+            glassDivider
             footerSection
         }
         .frame(width: 320)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color(red: 0.05, green: 0.05, blue: 0.08).opacity(0.6))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .strokeBorder(.white.opacity(0.10), lineWidth: 0.5)
+                )
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .shadow(color: .black.opacity(0.55), radius: 20, x: 0, y: 8)
+        .preferredColorScheme(.dark)
+    }
+
+    private var glassDivider: some View {
+        Rectangle().fill(.white.opacity(0.06)).frame(height: 0.5)
     }
 
     // MARK: - Header
 
     private var headerSection: some View {
         HStack(spacing: 10) {
-            HStack(spacing: 3) {
+            HStack(spacing: 4) {
                 Text(LanguagePair.flag(for: appState.nativeLang))
                     .font(.title2)
                 Image(systemName: "arrow.right")
-                    .font(.system(size: 9, weight: .bold))
-                    .foregroundStyle(.tertiary)
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(.white.opacity(0.28))
                 Text(LanguagePair.flag(for: appState.targetLang))
                     .font(.title2)
             }
 
             VStack(alignment: .leading, spacing: 1) {
                 Text("Parlay")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.white)
                 Text(appState.targetLangName)
                     .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.white.opacity(0.45))
             }
 
             Spacer()
 
             Text(appState.learningLevel.capitalized)
                 .font(.system(size: 10, weight: .semibold))
-                .padding(.horizontal, 8)
-                .padding(.vertical, 3)
-                .background(Capsule().fill(.blue.opacity(0.1)))
-                .foregroundStyle(.blue)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(
+                    Capsule().fill(Color(red: 0.45, green: 0.62, blue: 1.0).opacity(0.12))
+                        .overlay(Capsule().strokeBorder(Color(red: 0.45, green: 0.62, blue: 1.0).opacity(0.25), lineWidth: 0.5))
+                )
+                .foregroundStyle(Color(red: 0.45, green: 0.62, blue: 1.0))
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 11)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
     }
 
     // MARK: - Status Strip
 
     private var statusStrip: some View {
-        HStack(spacing: 7) {
+        HStack(spacing: 8) {
             statusIndicator
             statusText
             Spacer()
@@ -72,9 +106,9 @@ struct MenuBarView: View {
                     .foregroundStyle(.red)
             }
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 6)
-        .background(.primary.opacity(0.04))
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(.white.opacity(0.025))
     }
 
     @ViewBuilder
@@ -93,7 +127,7 @@ struct MenuBarView: View {
     @ViewBuilder
     private var statusText: some View {
         if appState.isRecording {
-            Text("Listening — Cmd+Shift+L to stop")
+            Text("Listening — ⌘⇧L to stop")
                 .font(.system(size: 11, weight: .medium))
                 .foregroundStyle(.green)
         } else if appState.isProcessing {
@@ -103,54 +137,60 @@ struct MenuBarView: View {
         } else if !appState.isWhisperReady {
             Text("Loading speech model…")
                 .font(.system(size: 11))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.white.opacity(0.45))
         } else if appState.canRecord {
-            Text("Ready — press Cmd+Shift+L")
+            Text("Ready — press ⌘⇧L to start")
                 .font(.system(size: 11))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.white.opacity(0.45))
         } else {
             Text("Unavailable")
                 .font(.system(size: 11))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.white.opacity(0.45))
         }
     }
 
     // MARK: - Actions
 
     private var actionSection: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 6) {
             if appState.isRecording {
-                menuButton("Stop & Analyze", icon: "stop.circle.fill", tint: .green) {
+                glassActionButton("Stop & Analyze", icon: "stop.circle.fill", gradient: [.green, .green.opacity(0.85)]) {
                     delegate.toggleRecording()
                 }
-                menuButton("Cancel", icon: "xmark.circle", tint: .secondary) {
+                glassActionButton("Cancel", icon: "xmark.circle", gradient: [.white.opacity(0.08), .white.opacity(0.05)]) {
                     delegate.cancelRecording()
                 }
                 .keyboardShortcut(.escape, modifiers: [])
             } else {
-                menuButton("Start Listening", icon: "mic.fill", tint: .blue) {
+                glassActionButton("Start Listening", icon: "mic.fill", gradient: [Color(red: 0, green: 0.478, blue: 1.0), Color(red: 0, green: 0.4, blue: 0.867)]) {
                     delegate.toggleRecording()
                 }
                 .disabled(!appState.canRecord)
+
+                Text("⌘⇧L")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.white.opacity(0.28))
             }
         }
-        .padding(10)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
     }
 
-    private func menuButton(_ title: String, icon: String, tint: Color, action: @escaping () -> Void) -> some View {
+    private func glassActionButton(_ title: String, icon: String, gradient: [Color], action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 8) {
                 Image(systemName: icon)
-                    .font(.system(size: 12))
-                    .foregroundStyle(tint)
-                    .frame(width: 16)
-                Text(title)
                     .font(.system(size: 13))
-                Spacer()
+                Text(title)
+                    .font(.system(size: 13, weight: .semibold))
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 7)
-            .background(RoundedRectangle(cornerRadius: 7).fill(tint.opacity(0.07)))
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(LinearGradient(colors: gradient, startPoint: .top, endPoint: .bottom))
+            )
         }
         .buttonStyle(.plain)
     }
@@ -158,13 +198,11 @@ struct MenuBarView: View {
     // MARK: - Permissions
 
     private var permissionsSection: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("SETUP REQUIRED")
+        VStack(alignment: .leading, spacing: 6) {
+            Text("PERMISSIONS")
                 .font(.system(size: 9, weight: .semibold))
-                .kerning(1)
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 14)
-                .padding(.top, 8)
+                .kerning(1.5)
+                .foregroundStyle(.white.opacity(0.28))
 
             permissionRow("Microphone", granted: appState.hasMicrophonePermission) {
                 delegate.openSystemPreferences(for: "mic")
@@ -173,7 +211,8 @@ struct MenuBarView: View {
                 delegate.openSystemPreferences(for: "accessibility")
             }
         }
-        .padding(.bottom, 6)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
     }
 
     private func permissionRow(_ name: String, granted: Bool, action: @escaping () -> Void) -> some View {
@@ -181,18 +220,20 @@ struct MenuBarView: View {
             HStack(spacing: 8) {
                 Image(systemName: granted ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 12))
-                    .foregroundStyle(granted ? .green : .secondary)
+                    .foregroundStyle(granted ? .green : .white.opacity(0.28))
                 Text(name)
                     .font(.system(size: 12))
+                    .foregroundStyle(.white.opacity(0.72))
                 Spacer()
                 if !granted {
                     Text("Grant →")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(.blue)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Color(red: 0.45, green: 0.62, blue: 1.0))
                 }
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 5)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(RoundedRectangle(cornerRadius: 8).fill(.white.opacity(0.03)))
         }
         .buttonStyle(.plain)
     }
@@ -200,24 +241,29 @@ struct MenuBarView: View {
     // MARK: - Last Result Card
 
     private func lastResultCard(_ r: LangResponse) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: 8) {
             HStack {
-                HStack(spacing: 4) {
-                    Capsule()
+                HStack(spacing: 6) {
+                    RoundedRectangle(cornerRadius: 2)
                         .fill(modeColor(r))
-                        .frame(width: 2.5, height: 11)
+                        .frame(width: 3, height: 14)
                     Text(modeLabel(r).uppercased())
                         .font(.system(size: 9, weight: .bold))
-                        .kerning(1.2)
+                        .kerning(1.5)
                         .foregroundStyle(modeColor(r))
                 }
                 Spacer()
                 Button {
                     SpeechService.shared.speak(speakableText(r), lang: appState.targetLang)
                 } label: {
-                    Image(systemName: "play.circle.fill")
-                        .font(.system(size: 15))
-                        .foregroundStyle(.secondary)
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 9))
+                        .foregroundStyle(.white.opacity(0.55))
+                        .frame(width: 24, height: 24)
+                        .background(
+                            Circle().fill(.white.opacity(0.04))
+                                .overlay(Circle().strokeBorder(.white.opacity(0.08), lineWidth: 0.5))
+                        )
                 }
                 .buttonStyle(.plain)
                 .help("Listen")
@@ -226,24 +272,28 @@ struct MenuBarView: View {
             if let transcription = appState.lastTranscription {
                 Text("\u{201C}\(transcription)\u{201D}")
                     .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.white.opacity(0.28))
                     .lineLimit(1)
             }
 
             Text(r.mainText)
-                .font(.system(size: 14, weight: .semibold, design: .serif))
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(.white)
                 .lineLimit(3)
                 .fixedSize(horizontal: false, vertical: true)
 
             if let pronunciation = r.pronunciation {
-                Text(pronunciation)
-                    .font(.system(size: 11, design: .monospaced))
-                    .foregroundStyle(.secondary)
+                HStack(spacing: 6) {
+                    Text(pronunciation)
+                        .font(.system(size: 11))
+                        .foregroundStyle(.white.opacity(0.45))
+                    Spacer()
+                }
             }
         }
-        .padding(11)
-        .background(RoundedRectangle(cornerRadius: 9).fill(.primary.opacity(0.04)))
-        .padding(.horizontal, 10)
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 12).fill(.white.opacity(0.03)))
+        .padding(.horizontal, 12)
         .padding(.vertical, 8)
     }
 
@@ -262,19 +312,19 @@ struct MenuBarView: View {
                 NSApplication.shared.terminate(nil)
             }
         }
-        .padding(.horizontal, 6)
-        .padding(.vertical, 5)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
     }
 
     private func footerButton(_ label: String, icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 4) {
+            HStack(spacing: 5) {
                 Image(systemName: icon).font(.system(size: 10))
                 Text(label).font(.system(size: 11))
             }
-            .foregroundStyle(.secondary)
+            .foregroundStyle(.white.opacity(0.45))
             .padding(.horizontal, 8)
-            .padding(.vertical, 4)
+            .padding(.vertical, 5)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -289,9 +339,9 @@ struct MenuBarView: View {
     }
 
     private func modeColor(_ r: LangResponse) -> Color {
-        if r.isPronunciation { return .teal }
-        if r.isCorrection    { return .orange }
-        return .blue
+        if r.isPronunciation { return Color(red: 0.306, green: 0.859, blue: 0.722) }
+        if r.isCorrection    { return Color(red: 1.0, green: 0.42, blue: 0.36) }
+        return Color(red: 0.961, green: 0.784, blue: 0.259)
     }
 
     private func speakableText(_ r: LangResponse) -> String {

@@ -11,7 +11,7 @@ struct OnboardingView: View {
     @State private var targetLang: String = UserDefaults.standard.string(forKey: "targetLang") ?? "en"
     @State private var learningLevel: String = UserDefaults.standard.string(forKey: "learningLevel") ?? "intermediate"
 
-    private let totalSteps = 5
+    private let totalSteps = 6
     private let levels = ["beginner", "intermediate", "advanced"]
 
     var body: some View {
@@ -26,8 +26,9 @@ struct OnboardingView: View {
                 case 0: welcomeStep
                 case 1: languagesStep
                 case 2: apiKeyStep
-                case 3: permissionsStep
-                case 4: doneStep
+                case 3: microphoneStep
+                case 4: accessibilityStep
+                case 5: doneStep
                 default: EmptyView()
                 }
             }
@@ -130,70 +131,81 @@ struct OnboardingView: View {
         }
     }
 
-    // MARK: - Step 3: Permissions
+    // MARK: - Step 3: Microphone
 
-    private var permissionsStep: some View {
-        VStack(spacing: 20) {
-            Text("Grant Permissions")
-                .font(.title2)
-                .fontWeight(.semibold)
-
-            VStack(spacing: 12) {
-                permissionRow(
-                    icon: "mic.fill",
-                    title: "Microphone",
-                    subtitle: "Required to capture your voice",
-                    granted: appState.hasMicrophonePermission,
-                    action: { delegate.openSystemPreferences(for: "mic") }
-                )
-
-                permissionRow(
-                    icon: "accessibility",
-                    title: "Accessibility",
-                    subtitle: "Required for the global hotkey",
-                    granted: appState.hasAccessibilityPermission,
-                    action: { delegate.requestAccessibilityPermission() }
-                )
-            }
-            .padding(.horizontal, 40)
-
-            Button("Refresh Status") {
-                delegate.checkPermissions()
-            }
-            .buttonStyle(.plain)
-            .font(.caption)
-            .foregroundStyle(.secondary)
-        }
+    private var microphoneStep: some View {
+        permissionStep(
+            icon: "mic.fill",
+            iconColor: .red,
+            title: "Microphone Access",
+            description: "Parlay listens to your voice to transcribe questions and practice sessions.",
+            granted: appState.hasMicrophonePermission,
+            grantAction: { delegate.openSystemPreferences(for: "mic") },
+            refreshAction: { delegate.checkPermissions() }
+        )
     }
 
-    private func permissionRow(icon: String, title: String, subtitle: String, granted: Bool, action: @escaping () -> Void) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.title2)
-                .frame(width: 30)
-                .foregroundStyle(granted ? .green : .secondary)
+    // MARK: - Step 4: Accessibility
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .fontWeight(.medium)
-                Text(subtitle)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+    private var accessibilityStep: some View {
+        permissionStep(
+            icon: "accessibility",
+            iconColor: .blue,
+            title: "Accessibility Access",
+            description: "Required to detect the global hotkey (Cmd+Shift+L) while other apps are in focus.",
+            granted: appState.hasAccessibilityPermission,
+            grantAction: { delegate.requestAccessibilityPermission() },
+            refreshAction: { delegate.checkPermissions() }
+        )
+    }
+
+    private func permissionStep(
+        icon: String,
+        iconColor: Color,
+        title: String,
+        description: String,
+        granted: Bool,
+        grantAction: @escaping () -> Void,
+        refreshAction: @escaping () -> Void
+    ) -> some View {
+        VStack(spacing: 24) {
+            ZStack {
+                Circle()
+                    .fill(iconColor.opacity(0.1))
+                    .frame(width: 72, height: 72)
+                Image(systemName: granted ? "checkmark.circle.fill" : icon)
+                    .font(.system(size: 30))
+                    .foregroundStyle(granted ? .green : iconColor)
             }
 
-            Spacer()
+            VStack(spacing: 8) {
+                Text(title)
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                Text(description)
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+            }
 
             if granted {
-                Image(systemName: "checkmark.circle.fill")
+                Label("Permission granted", systemImage: "checkmark.circle.fill")
                     .foregroundStyle(.green)
+                    .font(.callout)
             } else {
-                Button("Grant") { action() }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.small)
+                VStack(spacing: 10) {
+                    Button("Grant Access") { grantAction() }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.large)
+
+                    Button("Already granted — refresh") { refreshAction() }
+                        .buttonStyle(.plain)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
-        .padding(12)
-        .background(RoundedRectangle(cornerRadius: 8).fill(.quaternary))
     }
 
     // MARK: - Step 4: Done
@@ -229,6 +241,8 @@ struct OnboardingView: View {
 
     private var canAdvance: Bool {
         if currentStep == 2 { return !apiKey.isEmpty }
+        if currentStep == 3 { return appState.hasMicrophonePermission }
+        if currentStep == 4 { return appState.hasAccessibilityPermission }
         return true
     }
 
@@ -244,7 +258,7 @@ struct OnboardingView: View {
             Spacer()
 
             if currentStep < totalSteps - 1 {
-                Button("Next") {
+                Button(currentStep == 3 || currentStep == 4 ? "Continue" : "Next") {
                     advance()
                 }
                 .keyboardShortcut(.return, modifiers: [])

@@ -10,7 +10,7 @@ final class AppDelegate: NSObject {
     private let openAIService = OpenAIService()
     private let vocabularyStore = VocabularyStore()
     private let languageContext = LanguageContext()
-    private lazy var overlayController = OverlayController()
+    private lazy var islandController = IslandController()
 
     func setup() {
         checkPermissions()
@@ -19,6 +19,7 @@ final class AppDelegate: NSObject {
         Task { await loadRecentVocab() }
         observeWindowVisibility()
         showOnboardingIfNeeded()
+        islandController.start(appState: appState)
     }
 
     // MARK: - Onboarding
@@ -100,6 +101,7 @@ final class AppDelegate: NSObject {
             do {
                 try await whisperService.loadModel(name: appState.whisperModel)
                 appState.isWhisperReady = true
+                islandController.sync(appState: appState)
                 Log.info("[AppDelegate] Whisper model loaded")
             } catch {
                 Log.error("[AppDelegate] Whisper load failed: \(error)")
@@ -151,6 +153,7 @@ final class AppDelegate: NSObject {
         _ = audioCaptureService.stopRecording()
         appState.isRecording = false
         appState.errorMessage = nil
+        islandController.hide()
         Log.info("[AppDelegate] Recording cancelled")
     }
 
@@ -168,6 +171,7 @@ final class AppDelegate: NSObject {
         do {
             try audioCaptureService.startRecording()
             appState.isRecording = true
+            islandController.showRecording()
             Log.info("[AppDelegate] Recording started")
         } catch {
             appState.errorMessage = "Mic error: \(error.localizedDescription)"
@@ -179,7 +183,7 @@ final class AppDelegate: NSObject {
         let audioData = audioCaptureService.stopRecording()
         appState.isRecording = false
         appState.isProcessing = true
-        overlayController.showProcessing()
+        islandController.showProcessing()
 
         Task {
             do {
@@ -209,8 +213,8 @@ final class AppDelegate: NSObject {
                 appState.lastResponse = response
                 appState.isProcessing = false
 
-                overlayController.targetLang = appState.targetLang
-                overlayController.show(response: response, duration: appState.overlayDuration)
+                islandController.targetLang = appState.targetLang
+                islandController.show(response: response, duration: appState.overlayDuration)
 
                 // Auto-play pronunciation
                 if response.isPronunciation {
@@ -233,7 +237,7 @@ final class AppDelegate: NSObject {
             } catch {
                 appState.isProcessing = false
                 appState.errorMessage = error.localizedDescription
-                overlayController.hide()
+                islandController.hide()
                 Log.error("[AppDelegate] Process failed: \(error)")
             }
         }

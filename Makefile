@@ -9,6 +9,7 @@ dev:
 	@swift build 2>&1 | tail -5
 	@mkdir -p $(APP_BUNDLE)/Contents/MacOS
 	@cp .build/debug/$(APP_NAME) $(APP_BUNDLE)/Contents/MacOS/$(APP_NAME)
+	@cp Parlay/Resources/AppInfo.plist $(APP_BUNDLE)/Contents/Info.plist
 	@codesign --force --sign "$(SIGN_ID)" --entitlements Parlay/Resources/Parlay.entitlements $(APP_BUNDLE)
 	@pkill -x $(APP_NAME) 2>/dev/null || true
 	@sleep 0.3
@@ -32,6 +33,7 @@ bundle: build
 	mkdir -p $(APP_BUNDLE)/Contents/MacOS
 	mkdir -p $(APP_BUNDLE)/Contents/Resources
 	cp .build/release/$(APP_NAME) $(APP_BUNDLE)/Contents/MacOS/$(APP_NAME)
+	cp Parlay/Resources/AppInfo.plist $(APP_BUNDLE)/Contents/Info.plist
 	codesign --force --sign "$(SIGN_ID)" --entitlements Parlay/Resources/Parlay.entitlements $(APP_BUNDLE)
 	@echo "✅ $(APP_BUNDLE) ready"
 
