@@ -1,15 +1,21 @@
-# LangLens
+# Parlay
 
 A macOS menu bar app for real-time language learning. Press a hotkey, speak, and get instant AI-powered feedback — translations, corrections, or pronunciation help — right on your screen.
+
+## Preview
+
+![Parlay preview](https://github.com/victorgalvez56/Parlay/releases/download/v0.1.0/preview.gif)
+
+Full-quality MP4: [preview.mp4](https://github.com/victorgalvez56/Parlay/releases/download/v0.1.0/preview.mp4)
 
 ## Features
 
 ### Smart AI Modes
 
-LangLens automatically detects what you need based on what you say:
+Parlay automatically detects what you need based on what you say:
 
 - **Translation** — Speak in your native language and get an instant translation to your target language, with pronunciation and examples.
-- **Correction** — Speak a sentence in your target language to practice. LangLens corrects errors, explains what was wrong (in your native language), and shows alternative ways to say it.
+- **Correction** — Speak a sentence in your target language to practice. Parlay corrects errors, explains what was wrong (in your native language), and shows alternative ways to say it.
 - **Pronunciation** — Ask "how do I pronounce [word]?" or just say a single word. Get IPA phonetics, a sound-by-sound breakdown in your native language, and common mistakes to avoid.
 
 ### Learning History
